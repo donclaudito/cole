@@ -1,0 +1,505 @@
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Activity, Syringe, AlertTriangle, Download, ChevronRight, Terminal, CheckCircle2, ShieldAlert, Image as ImageIcon, Scissors, Upload } from 'lucide-react';
+
+// --- DATA CURATION & CHAPTER STATE: COLECISTITE AGUDA ---
+const chapters = [
+  {
+    id: "capa",
+    title: "Capa",
+    icon: ImageIcon,
+    widgets: [
+      { label: "Autor Principal", status: "Dr. Claudio Orenstein", type: "success" },
+      { label: "Foco", status: "Emergência Biliar", type: "info" },
+      { label: "Edição", status: "Base44 2026", type: "info" }
+    ],
+    content: `` // O conteúdo será renderizado dinamicamente pelo motor de Upload
+  },
+  {
+    id: "prefacio",
+    title: "Prefácio: Heroísmo vs. Tática",
+    icon: BookOpen,
+    widgets: [
+      { label: "Diretriz Base", status: "Tokyo Guidelines", type: "info" },
+      { label: "Paradigma Atual", status: "Cultura de Segurança", type: "success" },
+      { label: "Lesão Biliar (BDI)", status: "Evitável", type: "warning" }
+    ],
+    content: `
+      <p>A frieza analítica do cirurgião é testada não na dissecção fácil, mas no momento exato em que a tática de resgate supera o heroísmo anatômico. A colecistite aguda, frequentemente subestimada como um procedimento "de rotina", permanece como uma das principais fontes de litígios e morbidade iatrogênica grave na cirurgia geral.</p>
+      <p>Este volume do repositório Base44 disseca a abordagem sênior à via biliar hostil. Baseado nas <em>Tokyo Guidelines 2018 (TG18)</em> e na taxonomia de Strasberg para os procedimentos de *bailout*, o cirurgião contemporâneo deve internalizar que a conversão para cirurgia aberta não é mais a panaceia para a inflamação severa. A verdadeira maestria reside no reconhecimento precoce da Escala de Parkland e na aplicação impecável de técnicas de resgate subtotal.</p>
+    `
+  },
+  {
+    id: "c1-diagnostico",
+    title: "1. Diagnóstico e Estadiamento",
+    icon: Activity,
+    widgets: [
+      { label: "Critério Diagnóstico", status: "Sinais Locais + Sistêmicos", type: "success" },
+      { label: "Padrão-Ouro Inicial", status: "Ultrassonografia", type: "info" },
+      { label: "Uso de TC", status: "Apenas Atípicos/Complicações", type: "warning" }
+    ],
+    content: `
+      <p>O diagnóstico definitivo, seguindo os preceitos de Tokyo (TG18), exige a intersecção tríplice de Sinais Locais (Sinal de Murphy, massa), Sinais Sistêmicos (Febre, PCR, Leucocitose) e Achados de Imagem claros.</p>
+      
+      <h3>O Papel Crítico da Imagem</h3>
+      <p>A <strong>Ultrassonografia</strong> permanece o padrão-ouro inicial. Espessura da parede &gt;4mm, distensão vesicular expressiva (eixo longo &gt;8cm, curto &gt;4cm) e fluido perivesicular são os sinais cardinais inquestionáveis.</p>
+      <p>A Tomografia Computadorizada (TC) ou Colangio-RM são mandatórias em apresentações atípicas, forte suspeita de coledocolitíase associada ou para mapear complicações locais severas, como gangrena, enfisema parietal ou abscessos hepáticos contíguos.</p>
+      
+      <div style="background-color: #0f172a; border-left: 4px solid #3b82f6; padding: 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0;">
+        <h4 style="color: #60a5fa; margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem;">A Armadilha da Proteína C-Reativa (PCR)</h4>
+        <p style="margin-bottom: 0;">Valores de PCR acima de 200 mg/L em um quadro sugestivo têm altíssimo valor preditivo positivo para necrose vesicular. Esteja preparado para uma anatomia distorcida antes mesmo de inserir o primeiro trocarte.</p>
+      </div>
+    `
+  },
+  {
+    id: "c2-parkland",
+    title: "2. Estratificação de Risco (Parkland)",
+    icon: AlertTriangle,
+    widgets: [
+      { label: "Escala", status: "Intraoperatória Inicial", type: "info" },
+      { label: "Grau 4 e 5", status: "Risco Extremo BDI", type: "warning" },
+      { label: "Decisão", status: "Pré-Dissecção", type: "success" }
+    ],
+    content: `
+      <p>A Escala de Parkland estratifica a dificuldade intraoperatória imediatamente após a inspeção visual laparoscópica inicial, <strong>mesmo antes da tentativa de dissecção do Triângulo de Calot</strong>.</p>
+      
+      <h3>O Limiar da Dissecção Segura</h3>
+      <p>O cirurgião deve classificar mentalmente a anatomia assim que a vesícula é exposta:</p>
+      <ul>
+        <li><strong>Grau 1 e 2:</strong> Vesícula normal a moderadamente aderida (aderências frouxas ao cólon ou omento). Dissecção anatômica padrão.</li>
+        <li><strong>Grau 3:</strong> Presença de aderências densas no corpo, fluido perivesicular ou cálculo encravado no infundíbulo. Exige dissecção minuciosa para atingir a Visão Crítica de Segurança (CVS).</li>
+        <li><strong>Grau 4 e 5 (Hostil):</strong> Anatomia totalmente obscurecida por aderências densas abrangendo a base, necrose franca, perfuração, abscesso ou fístula (Mirizzi).</li>
+      </ul>
+
+      <p><strong>A Regra de Ouro:</strong> Graus 4 e 5 predizem um risco inaceitavelmente alto de lesão da via biliar principal. Nestes cenários inflamatórios hostis, a insistência na técnica anatômica padrão para tentar provar habilidade cirúrgica é a gênese da complicação iatrogênica; a estratégia de <em>Bailout</em> deve ser acionada o mais precocemente possível.</p>
+    `
+  },
+  {
+    id: "c3-conduta",
+    title: "3. Conduta e Severidade Fisiológica",
+    icon: Activity,
+    widgets: [
+      { label: "Grau II", status: "Timing é Fundamental", type: "info" },
+      { label: "Grau III", status: "Drenagem Sistêmica Inicial", type: "warning" },
+      { label: "Cirurgia Ideal", status: "Dentro de 72h", type: "success" }
+    ],
+    content: `
+      <p>A classificação TG18 dita categoricamente se a conduta inicial será a intervenção cirúrgica imediata ou a drenagem percutânea de resgate.</p>
+
+      <div style="overflow-x: auto; margin-top: 1.5rem; margin-bottom: 2rem;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+          <thead>
+            <tr style="background-color: #1e293b; color: #f8fafc; border-bottom: 2px solid #334155;">
+              <th style="padding: 12px;">Grau de Severidade</th>
+              <th style="padding: 12px;">Características</th>
+              <th style="padding: 12px;">Tática Base44</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #334155;">
+              <td style="padding: 12px; font-weight: bold; color: #10b981;">Grau I (Leve)</td>
+              <td style="padding: 12px;">Doença restrita à vesícula, paciente hígido.</td>
+              <td style="padding: 12px;">Colecistectomia Videolaparoscópica (CVL) precoce (ideal < 72h).</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #334155;">
+              <td style="padding: 12px; font-weight: bold; color: #f59e0b;">Grau II (Moderada)</td>
+              <td style="padding: 12px;">Inflamação local severa (gangrena, abscesso, duração > 72h) com leucócitos > 18k ou massa.</td>
+              <td style="padding: 12px;">CVL por cirurgião experiente se paciente tolerar. Em alto risco (CCI > 5), usar Antibiótico ou Colecistostomia como ponte.</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; font-weight: bold; color: #ef4444;">Grau III (Grave)</td>
+              <td style="padding: 12px;">Disfunção orgânica nova (PA baixa, disfunção renal, respiratória, neurológica).</td>
+              <td style="padding: 12px;"><strong>Ressuscitação em UTI e Colecistostomia Percutânea.</strong> CVL apenas após semanas de estabilização fisiológica.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>O Impacto do Timing Cirúrgico</h3>
+      <p>A fase intermediária (72 horas até 6 semanas) é clinicamente conhecida como o período fibrótico-inflamatório. Neste estágio crítico, a neovascularização anômala e o espessamento brutal das aderências maximizam o risco de lesão iatrogênica biliar, fazendo a taxa de conversão saltar vertiginosamente. Intervir precocemente (< 72h) permanece como a conduta estritamente superior em segurança.</p>
+    `
+  },
+  {
+    id: "c4-bailout",
+    title: "4. O Arsenal de Resgate (Bailout)",
+    icon: Scissors,
+    widgets: [
+      { label: "Alvo Básico", status: "Visão Crítica (CVS)", type: "success" },
+      { label: "Se Falhar", status: "Subtotal Reconstituinte", type: "info" },
+      { label: "Dano Iminente", status: "Drenagem de Controle", type: "warning" }
+    ],
+    content: `
+      <p>Quando a Visão Crítica de Segurança de Strasberg (CVS) não pode ser obtida devido a uma inflamação que funde o infundíbulo às estruturas hilares, tentar dissecá-lo às cegas é o erro cardeal. O cirurgião deve ativar o protocolo de <em>Bailout</em>.</p>
+      
+      <ol style="padding-left: 1.5rem; margin-bottom: 2rem;">
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Subtotal Reconstituinte</strong><br/>
+          <span style="color: #94a3b8; font-size: 0.95em;">Ressecção da parede anterior da vesícula e fechamento do coto infundibular inferior com sutura intra-corpórea, preservando a porção posterior aderida ao leito hepático. Apresenta a menor taxa de fístula biliar pós-operatória intrínseca, contudo, exige que o tecido do infundíbulo possua qualidade favorável (sem necrose putrefata) para uma síntese tecidual segura e livre de tensão.</span>
+        </li>
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Subtotal Fenestradora</strong><br/>
+          <span style="color: #94a3b8; font-size: 0.95em;">Remoção parcial da parede anterior sem fechamento do remanescente infundibular. A mucosa residual é ablacionada (eletrocautério/argônio) e um dreno tubular de sucção é alocado. Mandatória quando identificar o ducto cístico é absolutamente impossível (ex: Síndrome de Mirizzi severa) ou há intensa fusão tecidual. Aceita-se a fístula biliar controlada temporária em troca da integridade do colédoco.</span>
+        </li>
+        <li>
+          <strong>Drenagem de Controle (Damage Control Biliar)</strong><br/>
+          <span style="color: #94a3b8; font-size: 0.95em;">A Colecistostomia cirúrgica laparoscópica ou a lavagem com drenagem cavitária ampla é a última fronteira aceitável. Utilizada quando a inflamação vascularizada torna até mesmo a ressecção subtotal um risco hemorrágico incontrolável imediato para um paciente instável.</span>
+        </li>
+      </ol>
+      
+      <p><em>Nota Operatória Base44:</em> Converter para cirurgia aberta em meio a um plastrão inflamatório Grau 5 de Parkland apenas transfere a má visualização da tela para o campo aberto, frequentemente resultando em ressecções colaterais desastrosas. O Bailout Laparoscópico é, hoje, a técnica de resgate mais refinada.</p>
+    `
+  },
+  {
+    id: "referencias",
+    title: "Referências Bibliográficas",
+    icon: BookOpen,
+    widgets: [
+      { label: "Guideline Global", status: "TG18", type: "success" },
+      { label: "Segurança Biliar", status: "Strasberg/SAGES", type: "info" }
+    ],
+    content: `
+      <p>As táticas e limites cirúrgicos descritos neste volume ancoram-se estritamente nestes tratados fundamentais:</p>
+      <ul>
+        <li><strong>Yokoe, M., Hata, J., Takada, T., et al. (2018).</strong> <em>Tokyo Guidelines 2018: diagnostic criteria and severity grading of acute cholecystitis</em>. Journal of Hepato-Biliary-Pancreatic Sciences, 25(1), 41-54. (A pedra angular do manejo global).</li>
+        <li><strong>Wakabayashi, G., Iwashita, Y., Hibi, T., et al. (2018).</strong> <em>Tokyo Guidelines 2018: surgical management of acute cholecystitis: safe steps in laparoscopic cholecystectomy for acute cholecystitis (with videos)</em>. J Hepatobiliary Pancreat Sci.</li>
+        <li><strong>Madni, T. D., Leshikar, D. E., Minshall, C. T., et al. (2018).</strong> <em>The Parkland grading scale for cholecystitis</em>. The American Journal of Surgery, 215(4), 625-630. (Estratificação intraoperatória preditiva).</li>
+        <li><strong>Strasberg, S. M., Pucci, M. J., Brunt, L. M., Deziel, D. J. (2016).</strong> <em>Subtotal Cholecystectomy—“Fenestrating” vs “Reconstituting” Subtypes and the Prevention of Bile Duct Injury: Definition of the Optimal Procedure in Difficult Operative Conditions</em>. Journal of the American College of Surgeons, 222(1), 89-96. (Taxonomia definitiva do Bailout).</li>
+        <li><strong>Conrad, C., Wakabayashi, G., Asbun, H. J., et al. (2017).</strong> <em>IRCAD recommendation on safe laparoscopic cholecystectomy</em>. J Hepatobiliary Pancreat Sci.</li>
+        <li><strong>Brunt, L. M., Deziel, D. J., Telem, D. A., et al. (2020).</strong> <em>Safe Cholecystectomy Multi-society Practice Guideline and State of the Art Consensus Conference on Prevention of Bile Duct Injury during Cholecystectomy</em>. Annals of Surgery.</li>
+        <li><strong>Loozen, C. S., et al. (2018).</strong> <em>Laparoscopic cholecystectomy versus percutaneous catheter drainage for acute cholecystitis in high risk patients (CHOCOLATE)</em>. BMJ. (Ensaio clínico seminal sobre a drenagem percutânea).</li>
+        <li><strong>Iwashita, Y., et al. (2018).</strong> <em>Tokyo Guidelines 2018: management strategies for gallbladder drainage in patients with acute cholecystitis</em>. J Hepatobiliary Pancreat Sci. (O papel estratégico da colecistostomia).</li>
+        <li><strong>Okamoto, K., et al. (2018).</strong> <em>Tokyo Guidelines 2018: flowchart for the management of acute cholecystitis</em>. J Hepatobiliary Pancreat Sci. (Algoritmos de decisão e *step-up approach*).</li>
+        <li><strong>Gallaher, J. R., & Charles, A. (2022).</strong> <em>Acute Cholecystitis: A Review</em>. JAMA. (Revisão contemporânea de alto impacto clínico).</li>
+        <li><strong>de Mestral, C., et al. (2014).</strong> <em>Early versus delayed cholecystectomy for acute cholecystitis: a systematic review and meta-analysis</em>. CMAJ. (Evidência robusta sobre o *timing* da intervenção).</li>
+        <li><strong>Ansaloni, L., et al. (2016).</strong> <em>2016 WSES guidelines on acute calculous cholecystitis</em>. World Journal of Emergency Surgery. (Perspetiva global e tática em cirurgia de emergência).</li>
+        <li><strong>Sugrue, M., et al. (2019).</strong> <em>A safer cholecystectomy - A multi-society consensus</em>. World Journal of Surgery. (Sistematização de *checkpoints* de segurança intraoperatória).</li>
+        <li><strong>Sanford, D. E. (2019).</strong> <em>An Update on Technical Aspects of Cholecystectomy</em>. Surgical Clinics of North America. (Refinamento técnico para o cirurgião sénior).</li>
+        <li><strong>Pesce, A., et al. (2019).</strong> <em>Bile duct injury during laparoscopic cholecystectomy: necessities and current perspectives</em>. Annals of Translational Medicine. (Análise forense e clínica minuciosa das BDI).</li>
+        <li><strong>Van Dijk, A. H., et al. (2016).</strong> <em>Systematic review of antibiotic treatment for acute calculous cholecystitis</em>. Br J Surg. (Uso racional de antimicrobianos e *stewardship* biliar).</li>
+      </ul>
+    `
+  }
+];
+
+export default function App() {
+  const [activeChapter, setActiveChapter] = useState(chapters[0].id);
+  const [isExporting, setIsExporting] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
+  const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1559757175-5700dde675bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+
+  useEffect(() => {
+    if (!window.JSZip) {
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+      script.onload = () => setEngineReady(true);
+      document.body.appendChild(script);
+    } else {
+      setEngineReady(true);
+    }
+  }, []);
+
+  const chapterData = chapters.find(c => c.id === activeChapter);
+
+  const handleCoverUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCoverImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // --- EPUB EXPORT ENGINE ---
+  const exportToEPUB = async () => {
+    if (!window.JSZip) {
+      alert("Motor EPUB não carregado. Verifique a ligação à internet.");
+      return;
+    }
+    
+    setIsExporting(true);
+    const zip = new window.JSZip();
+
+    zip.file("mimetype", "application/epub+zip");
+
+    const metaInf = zip.folder("META-INF");
+    metaInf.file("container.xml", `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+    const oebps = zip.folder("OEBPS");
+
+    oebps.file("style.css", `
+      body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #333; }
+      h1, h2, h3, h4 { color: #b91c1c; }
+      p { margin-bottom: 1em; text-align: justify; }
+      table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+      th { background-color: #f1f5f9; text-align: left; padding: 8px; border-bottom: 2px solid #cbd5e1; }
+      td { padding: 8px; border-bottom: 1px solid #cbd5e1; }
+      .chapter-content > p:first-of-type:first-letter { font-size: 3em; float: left; margin: 0.1em 0.1em 0 0; color: #b91c1c; font-weight: bold; }
+    `);
+
+    let manifestItems = '';
+    let spineItems = '';
+    let navPoints = '';
+    let metadataCover = '';
+    let manifestCover = '';
+
+    if (coverImage.startsWith('data:image')) {
+      const base64 = coverImage.split(',')[1];
+      const mimeType = coverImage.split(';')[0].split(':')[1];
+      const ext = mimeType.split('/')[1] === 'jpeg' ? 'jpg' : mimeType.split('/')[1];
+      
+      oebps.folder("images").file(`cover.${ext}`, base64, {base64: true});
+      metadataCover = `<meta name="cover" content="cover-image"/>`;
+      manifestCover = `<item id="cover-image" href="images/cover.${ext}" media-type="${mimeType}"/>\n`;
+    }
+
+    chapters.forEach((chap, index) => {
+      const fileName = `chap_${index + 1}.xhtml`;
+      let cleanContent = chap.content.replace(/<br>/g, '<br/>');
+      const isCover = chap.id === "capa";
+      
+      if (isCover) {
+        if (coverImage.startsWith('data:image')) {
+          const mimeType = coverImage.split(';')[0].split(':')[1];
+          const ext = mimeType.split('/')[1] === 'jpeg' ? 'jpg' : mimeType.split('/')[1];
+          cleanContent = `<div style="text-align: center;"><img src="images/cover.${ext}" alt="Capa" style="max-width: 100%; height: auto;"/></div>`;
+        } else {
+          cleanContent = `<div style="text-align: center;"><img src="${coverImage}" alt="Capa" style="max-width: 100%; height: auto;"/></div>`;
+        }
+      }
+      
+      const xhtml = `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>${chap.title}</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+  ${!isCover ? `<h1 style="border-bottom: 2px solid #b91c1c; padding-bottom: 10px;">${chap.title}</h1>` : ''}
+  <div class="${isCover ? 'cover-content' : 'chapter-content'}">
+    ${cleanContent}
+  </div>
+</body>
+</html>`;
+
+      oebps.file(fileName, xhtml);
+
+      manifestItems += `<item id="chap_${index + 1}" href="${fileName}" media-type="application/xhtml+xml"/>\n`;
+      spineItems += `<itemref idref="chap_${index + 1}"/>\n`;
+      navPoints += `
+        <navPoint id="navPoint-${index + 1}" playOrder="${index + 1}">
+          <navLabel><text>${chap.title}</text></navLabel>
+          <content src="${fileName}"/>
+        </navPoint>\n`;
+    });
+
+    oebps.file("content.opf", `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>Base44 Tratado: Colecistite Aguda</dc:title>
+    <dc:creator opf:role="aut">Cláudio Marcelo Orenstein</dc:creator>
+    <dc:language>pt-BR</dc:language>
+    <dc:identifier id="BookId">urn:uuid:base44-colecistite-2026</dc:identifier>
+    ${metadataCover}
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="style" href="style.css" media-type="text/css"/>
+    ${manifestCover}
+    ${manifestItems}
+  </manifest>
+  <spine toc="ncx">
+    ${spineItems}
+  </spine>
+</package>`);
+
+    oebps.file("toc.ncx", `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:base44-colecistite-2026"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle><text>Base44 Tratado: Colecistite Aguda</text></docTitle>
+  <navMap>
+    ${navPoints}
+  </navMap>
+</ncx>`);
+
+    try {
+      const content = await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip" });
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "Base44_Tratado_Colecistite_Aguda.epub";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Erro na geração do EPUB:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-950 text-slate-300 font-sans overflow-hidden">
+      
+      {/* SIDEBAR NAVIGATION */}
+      <aside className="w-80 bg-slate-900 border-r border-slate-800 flex flex-col">
+        <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
+          <div className="p-2 bg-blue-900/30 rounded-lg text-blue-500">
+            <Terminal size={24} />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-100 tracking-wider">BASE44</h1>
+            <p className="text-xs text-slate-500 uppercase tracking-widest">Surgical Repository</p>
+          </div>
+        </div>
+
+        <div className="p-4 flex-1 overflow-y-auto space-y-2">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 ml-2">Índice Operatório</h2>
+          {chapters.map((chapter) => {
+            const Icon = chapter.icon;
+            const isActive = activeChapter === chapter.id;
+            return (
+              <button
+                key={chapter.id}
+                onClick={() => setActiveChapter(chapter.id)}
+                className={`w-full flex items-center space-x-3 p-3 rounded-lg text-left transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-slate-800 text-slate-100 border border-slate-700 shadow-md' 
+                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                }`}
+              >
+                <Icon size={18} className={isActive ? 'text-blue-500' : 'text-slate-500'} />
+                <span className="flex-1 text-sm font-medium truncate">{chapter.title}</span>
+                {isActive && <ChevronRight size={16} className="text-slate-500" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="p-4 border-t border-slate-800 text-xs text-slate-600 text-center">
+          Inteligência Cirúrgica | v2026
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col min-w-0">
+        
+        {/* TOP BAR */}
+        <header className="h-20 border-b border-slate-800 px-8 flex items-center justify-between bg-slate-950/50 backdrop-blur-sm z-10">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-light text-slate-100">{chapterData.title}</h2>
+          </div>
+          <button 
+            onClick={exportToEPUB}
+            disabled={!engineReady || isExporting}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium text-sm transition-all duration-300 shadow-lg ${
+              !engineReady ? 'bg-slate-800 text-slate-500 cursor-not-allowed' :
+              isExporting ? 'bg-blue-900/50 text-blue-200 cursor-wait' : 
+              'bg-blue-600 hover:bg-blue-500 text-white hover:shadow-blue-900/50'
+            }`}
+          >
+            {isExporting ? (
+              <div className="animate-pulse flex items-center space-x-2">
+                <div className="h-4 w-4 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></div>
+                <span>Compilando EPUB...</span>
+              </div>
+            ) : (
+              <>
+                <Download size={18} />
+                <span>Exportar Tratado</span>
+              </>
+            )}
+          </button>
+        </header>
+
+        {/* READING CANVAS */}
+        <div className="flex-1 overflow-y-auto p-8 lg:p-12 scroll-smooth">
+          <div className="max-w-5xl mx-auto flex gap-12">
+            
+            {/* TEXT CONTENT */}
+            <article className="flex-1 prose prose-invert prose-slate max-w-none">
+              {chapterData.id === 'capa' ? (
+                <div className="relative group flex items-center justify-center min-h-[70vh] bg-gradient-to-b from-slate-800 to-slate-950 rounded-xl border border-slate-700 overflow-hidden shadow-2xl">
+                  <img src={coverImage} alt="Capa" className="max-w-full max-h-[70vh] object-contain transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-sm">
+                    <Upload size={48} className="text-blue-400 mb-4" />
+                    <p className="text-slate-200 mb-6 text-lg font-medium">Anexar Nova Capa ao Tratado</p>
+                    <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md shadow-lg transition-colors font-semibold tracking-wide flex items-center gap-2">
+                      <ImageIcon size={20} />
+                      Selecionar Arquivo
+                      <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className={`
+                    text-lg leading-relaxed text-slate-300
+                    ${chapterData.id !== 'capa' ? `
+                      [&>h3]:text-slate-100 [&>h3]:font-medium [&>h3]:tracking-wide [&>h3]:mt-10 [&>h3]:mb-4
+                      [&>p]:mb-6 [&>p>strong]:text-slate-100 [&>p>strong]:font-semibold
+                      [&>p:first-of-type]:first-letter:text-6xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-blue-500 [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-4 [&>p:first-of-type]:first-letter:mt-2 [&>p:first-of-type]:first-line:uppercase [&>p:first-of-type]:first-line:tracking-widest [&>p:first-of-type]:first-letter:leading-none
+                      [&>ul]:mb-6 [&>ol]:mb-6
+                    ` : ''}
+                  `}
+                  dangerouslySetInnerHTML={{ __html: chapterData.content }}
+                />
+              )}
+            </article>
+
+            {/* WIDGETS SIDEBAR */}
+            <aside className="hidden xl:block w-72 shrink-0 space-y-6">
+              <div className="sticky top-0 pt-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Activity size={14}/>
+                  Parâmetros de Status
+                </h4>
+                
+                <div className="space-y-3">
+                  {chapterData.widgets.map((widget, i) => {
+                    const colors = {
+                      success: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+                      warning: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+                      info: "text-blue-400 bg-blue-400/10 border-blue-400/20"
+                    };
+                    const colorClass = colors[widget.type] || colors.info;
+
+                    return (
+                      <div key={i} className={`p-4 rounded-lg border backdrop-blur-md ${colorClass} flex flex-col gap-1`}>
+                        <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">{widget.label}</span>
+                        <div className="flex items-center gap-2">
+                          {widget.type === 'success' ? <CheckCircle2 size={14}/> : <ShieldAlert size={14} />}
+                          <span className="text-sm font-medium">{widget.status}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-8 p-4 rounded-lg bg-slate-900 border border-slate-800">
+                  <div className="text-xs text-slate-500 mb-2 uppercase tracking-widest">Aviso Operatório</div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    A evidência curada orienta a tática. O julgamento clínico à beira do leito dita a aplicação do resgate.
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+          </div>
+        </div>
+      </main>
+
+    </div>
+  );
+}
